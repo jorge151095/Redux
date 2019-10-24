@@ -95,15 +95,17 @@ __webpack_require__.r(__webpack_exports__);
 
 
 //nodes
+let addEmail = document.getElementById('addEmail');
 let input = document.getElementById("thingsInput");
 let todos = {}
 let list = document.getElementById("list");
+let emailsList = document.getElementById("emailsList");
 
 //function
 function drawTodos() {
     list.innerHTML = "";
     // Update todos
-    todos = store.getState();
+    todos = store.getState().todos;
     for( let key in todos) {
         let li = document.createElement('li');
         let classDone = todos[key].done ? "done" : "";
@@ -113,6 +115,31 @@ function drawTodos() {
         setListeners(li);
         list.appendChild(li);
     }
+}
+
+function drawEmails() {
+    emailsList.innerHTML = "";
+    let emails = store.getState().emails;
+    emails.map(email => {
+        let li = document.createElement('li');
+        li.innerHTML = `
+            <span>${email}<span>
+            <span id="${email}">X</span>
+        `;
+        setEmailClickListener(li);
+        emailsList.appendChild(li);
+    })
+    
+}
+
+function setEmailClickListener(li) {
+    li.addEventListener('click', e => {
+        let email = e.target.id;
+        store.dispatch({
+            type: "DELETE_EMAIL",
+            email
+        })
+    })
 }
 
 function setListeners(li) {
@@ -139,6 +166,7 @@ function setListeners(li) {
 input.addEventListener("keydown", e => {
     if (e.key === "Enter") {
         let text = e.target.value;
+        e.target.value = "";
         let todo = {text, done:false};
         store.dispatch({
             type: "ADD_TODO",
@@ -147,8 +175,28 @@ input.addEventListener("keydown", e => {
     }
 })
 
-//REDUX
+addEmail.addEventListener('keydown', e=> {
+    if(e.key === "Enter") {
+        let email = e.target.value;
+        e.target.value = "";
+        store.dispatch({
+            type: "ADD_EMAIL",
+            email
+        })
+    }
+});
 
+//REDUX
+function emailsReducer(state=[], action) {
+    switch(action.type) {
+        case "ADD_EMAIL":
+            return [...state, action.email];
+        case "DELETE_EMAIL":
+            return [...state.filter(mail => mail !== action.email)];
+        default:
+            return state;
+    }
+}
 // Reducer
 function todosReducer(state = { lol: true}, action) {
     switch(action.type) {
@@ -165,17 +213,32 @@ function todosReducer(state = { lol: true}, action) {
     }
 }
 
+//MIX reducers
+let rootReducer = Object(redux__WEBPACK_IMPORTED_MODULE_0__["combineReducers"])({
+    todos: todosReducer,
+    emails: emailsReducer
+});
+
 // store
-let store = Object(redux__WEBPACK_IMPORTED_MODULE_0__["createStore"])(todosReducer, {
-    0: {
-        text: "create store",
-        done: "true",
-        id: 0
+let store = Object(redux__WEBPACK_IMPORTED_MODULE_0__["createStore"])(rootReducer, {
+    emails: ["jorgeahg@gmail.com"],
+    todos: {0: {
+            text: "create store",
+            done: "true",
+            id: 0
+        }
     }
 });
 
-store.subscribe(drawTodos);
+//store.subscribe(drawTodos);
+store.subscribe(()=> {
+    drawTodos();
+    drawEmails();
+});
+
+//Init
 drawTodos();
+drawEmails();
 
 /***/ }),
 /* 1 */
